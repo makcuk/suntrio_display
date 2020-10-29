@@ -2,6 +2,9 @@ import pygame
 import pygame.freetype  # Import the freetype module.
 import time
 import requests
+from datetime import datetime
+
+
 
 url = 'http://192.168.1.231/status/status.php' #set your ip address of SAJ Wi-FI module
 auth_header = 'Basic YWRtaW46YWRtaW4=' # basic auth token, here is default admin/admin
@@ -25,6 +28,9 @@ class dotdict(dict):
 def update_inv_data():
     inv_data = {}
 
+    now = datetime.now()
+
+
     try:
         data = requests.get(url, headers = {'Authorization': auth_header})
         inv_values = data.text.split(',')
@@ -45,6 +51,8 @@ def update_inv_data():
         inv_data['l3_volts'] = "N/A"
         inv_data['inv_temp'] = "N/A"
         inv_data['ac_freq'] = "N/A"
+    
+    inv_data['current_time'] = now.strftime("%H:%M:%S")
     return dotdict(inv_data)
 
 if __name__ == "__main__":
@@ -73,7 +81,7 @@ if __name__ == "__main__":
         screen.blit(text_surface, (center(text_surface), grid(20)))
         text_surface, rect = AC_FONT.render("L1: %s L2: %s L3: %s" % (inv_data.l1_volts,inv_data.l2_volts,inv_data.l3_volts), (250, 51, 10))
         screen.blit(text_surface, (center(text_surface), grid(33)))
-        text_surface, rect = BAR_FONT.render("%s  %s" % (inv_data.inv_temp,inv_data.ac_freq), PH1_GREEN)
+        text_surface, rect = BAR_FONT.render("%s  %s  %s" % (inv_data.inv_temp,inv_data.ac_freq, inv_data.current_time), PH1_GREEN)
         screen.blit(text_surface, (center(text_surface), grid(45)))
 
 
