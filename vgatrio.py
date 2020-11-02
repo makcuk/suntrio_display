@@ -51,7 +51,6 @@ def update_inv_data():
         inv_data['l3_volts'] = "N/A"
         inv_data['inv_temp'] = "N/A"
         inv_data['ac_freq'] = "N/A"
-    
     inv_data['current_time'] = now.strftime("%H:%M:%S")
     return dotdict(inv_data)
 
@@ -63,6 +62,7 @@ if __name__ == "__main__":
     AC_FONT = pygame.freetype.Font("freesansbold.ttf", grid(4))
     BAR_FONT = pygame.freetype.Font("freesansbold.ttf", grid(3))
     running =  True
+    daily_gen = "00.0 kWh"
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -77,7 +77,9 @@ if __name__ == "__main__":
         center(text_surface)
         screen.blit(text_surface, (center(text_surface), grid(3)))
 
-        text_surface, rect = DAILY_FONT.render(inv_data.daily_generation, (255, 255, 255))
+        if inv_data.daily_generation != "NO DATA":
+            daily_gen = inv_data.daily_generation
+        text_surface, rect = DAILY_FONT.render(daily_gen, (255, 255, 255))
         screen.blit(text_surface, (center(text_surface), grid(20)))
         text_surface, rect = AC_FONT.render("L1: %s L2: %s L3: %s" % (inv_data.l1_volts,inv_data.l2_volts,inv_data.l3_volts), (250, 51, 10))
         screen.blit(text_surface, (center(text_surface), grid(33)))
