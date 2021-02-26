@@ -3,8 +3,25 @@ import pygame.freetype  # Import the freetype module.
 import time
 import requests
 from datetime import datetime
+import os
+import paho.mqtt.client as paho
 
+broker = os.getenv('MQTT_BROKER')
+port = 1883
+broker_user = os.getenv('MQTT_USER')
+broker_password = os.getenv('MQTT_PASSWORD')
+mqtt_root = os.getenv('MQTT_ROOT')
 
+client1 = paho.Client("suntrio")
+client1.username_pw_set(broker_user, broker_password)
+client1.connect(broker, port)
+ret = client1.publish(mqtt_root+"/status", "on")
+
+def publish_mqtt(parameter, value):
+    try:
+        ret = client1.publish(mqtt_root+"/"+parameter, value)
+    except:
+        pass # just ignore if failed
 
 url = 'http://192.168.1.231/status/status.php' #set your ip address of SAJ Wi-FI module
 auth_header = 'Basic YWRtaW46YWRtaW4=' # basic auth token, here is default admin/admin
@@ -86,7 +103,11 @@ if __name__ == "__main__":
         text_surface, rect = BAR_FONT.render("%s  %s  %s" % (inv_data.inv_temp,inv_data.ac_freq, inv_data.current_time), PH1_GREEN)
         screen.blit(text_surface, (center(text_surface), grid(45)))
 
-
+        publish_mqtt('current_power', inv_data.current_power)
+        publish_mqtt('daily_power', inv_data.daily_generation)
+        publish_mqtt('phase1', inv_data.l1_volts)
+        publish_mqtt('phase2', inv_data.l2_volts)
+        publish_mqtt('phase3', inv_data.l3_volts)
         pygame.display.flip()
         time.sleep(5)
 
