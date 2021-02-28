@@ -5,6 +5,15 @@ import requests
 from datetime import datetime
 import os
 import paho.mqtt.client as paho
+import logging
+import logging.handlers
+
+my_logger = logging.getLogger('vgatrio')
+my_logger.setLevel(logging.DEBUG)
+
+handler = logging.handlers.SysLogHandler(address = '/dev/log')
+
+my_logger.addHandler(handler)
 
 broker = os.getenv('MQTT_BROKER')
 port = 1883
@@ -20,8 +29,8 @@ ret = client1.publish(mqtt_root+"/status", "on")
 def publish_mqtt(parameter, value):
     try:
         ret = client1.publish(mqtt_root+"/"+parameter, value)
-    except:
-        pass # just ignore if failed
+    except Exception as e:
+        my_logger.debug("Failed publishing "+str(e))
 
 url = 'http://192.168.1.231/status/status.php' #set your ip address of SAJ Wi-FI module
 auth_header = 'Basic YWRtaW46YWRtaW4=' # basic auth token, here is default admin/admin
