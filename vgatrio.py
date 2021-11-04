@@ -7,6 +7,7 @@ import os
 import paho.mqtt.client as paho
 import logging
 import logging.handlers
+from sermatec_logger import Sermatec
 
 my_logger = logging.getLogger('vgatrio')
 my_logger.setLevel(logging.DEBUG)
@@ -23,8 +24,20 @@ mqtt_root = os.getenv('MQTT_ROOT')
 
 client1 = paho.Client("suntrio")
 client1.username_pw_set(broker_user, broker_password)
-client1.connect(broker, port)
+tries = 10
+while True:
+    try:
+        client1.connect(broker, port)
+        break
+    except:
+        time.sleep(5)
+        if tries == 0: os._exit(3)
+        tries -= 1
+
 ret = client1.publish(mqtt_root+"/status", "on")
+
+my_sm = Sermatec()
+my_sm.connect("pvdisplay.local")
 
 def publish_mqtt(parameter, value):
     try:
@@ -56,12 +69,14 @@ def update_inv_data():
 
     now = datetime.now()
 
-
+    sm_data = my_sm.get_data()
+    inv_data['sm_current_power'] = sm_data[0]
+    inv_data['sm_daily_power'] = sm_data[1]
     try:
         data = requests.get(url, headers = {'Authorization': auth_header})
         inv_values = data.text.split(',')
-        inv_data['current_power'] = str(inv_values[23])+" W"
-        inv_data['daily_generation'] = str(int(inv_values[3])/100)+" kWh"
+        inv_data['current_power'] = str(inv_values[23]+inv_data['sm_current_power'])+" W"
+        inv_data['daily_generation'] = str((int(inv_values[3])/100)+inv_data['sm_daily_power'])+" kWh"
         inv_data['l1_volts'] = str(int(inv_values[25])/10)+"V"
         inv_data['l2_volts'] = str(int(inv_values[27])/10)+"V"
         inv_data['l3_volts'] = str(int(inv_values[29])/10)+"V"
@@ -113,7 +128,9 @@ if __name__ == "__main__":
         screen.blit(text_surface, (center(text_surface), grid(45)))
 
         publish_mqtt('current_power', inv_data.current_power)
+        publish_mqtt('current_power_sm', inv_data.sm_current_power)
         publish_mqtt('daily_power', inv_data.daily_generation)
+        publish_mqtt('daily_power_sm', inv_data.sm_daily_power)
         publish_mqtt('phase1', inv_data.l1_volts)
         publish_mqtt('phase2', inv_data.l2_volts)
         publish_mqtt('phase3', inv_data.l3_volts)
