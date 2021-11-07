@@ -25,35 +25,38 @@ class Sermatec:
 
     def get_data(self, debug = False):
         step = 2
-        pv_power = 0
-        daily_power = 0
-        for req in (self.request_pv, self.request_daily, self.request_daily):
-            self.logger_socket.sendall(bytes(req))
-            reply = self.logger_socket.recv(1550)
-            command = reply[4]
-            if debug: print("command", command)
-            if command == Cmd.INFO:
-                serial = reply[13:39]
-                version = int.from_bytes(reply[7:9], "big")
-                if debug: print(serial, version)
-            elif command == Cmd.PV:
-                reply_a = []
-                for i in range(7, reply[6], step):
-#                print(i, ":", reply[i:i+step].hex(), int.from_bytes(reply[i:i+step], "big")) #, int.from_bytes(reply[i:i+4], "big"))
-                    reply_a.append(int.from_bytes(reply[i:i+step], "big"))
-                if debug: 
-                    print("PV1", reply_a[2],'W', reply_a[3]/10,'V', reply_a[4]/10, 'A')
-                    print("PV2", reply_a[5],'W', reply_a[6]/10,'V', reply_a[7]/10, 'A')
-                pv_power = reply_a[2]+reply_a[5]
-            elif command == Cmd.HZ:
+        pv_power = -1
+        daily_power = -1
+        while True:
+            for req in (self.data_init, self.request_pv, self.request_daily):
+                sleep(1)
+                print(req)
+                self.logger_socket.sendall(bytes(req))
+                reply = self.logger_socket.recv(1550)
+                command = reply[4]
+                if debug: print("command", command)
+                if command == Cmd.INFO:
+                    serial = reply[13:39]
+                    version = int.from_bytes(reply[7:9], "big")
+                    if debug: print(serial, version)
+                elif command == Cmd.PV:
+                    reply_a = []
+                    for i in range(7, reply[6], step):
+    #                print(i, ":", reply[i:i+step].hex(), int.from_bytes(reply[i:i+step], "big")) #, int.from_bytes(reply[i:i+4], "big"))
+                        reply_a.append(int.from_bytes(reply[i:i+step], "big"))
+                    if debug: 
+                        print("PV1", reply_a[2],'W', reply_a[3]/10,'V', reply_a[4]/10, 'A')
+                        print("PV2", reply_a[5],'W', reply_a[6]/10,'V', reply_a[7]/10, 'A')
+                    pv_power = reply_a[2]+reply_a[5]
+                elif command == Cmd.HZ:
 
-                reply_a = []
-                for i in range(7, reply[6], step):
-#                print(i, ":", reply[i:i+step].hex(), int.from_bytes(reply[i:i+step], "big")) #, int.from_bytes(reply[i:i+4], "big"))
-                    reply_a.append(int.from_bytes(reply[i:i+step], "big"))
-                if debug: print("daily", reply_a[0]/10, "total", reply_a[2])
-                daily_power = reply_a[0]/10
-            sleep(1)
+                    reply_a = []
+                    for i in range(7, reply[6], step):
+    #                print(i, ":", reply[i:i+step].hex(), int.from_bytes(reply[i:i+step], "big")) #, int.from_bytes(reply[i:i+4], "big"))
+                        reply_a.append(int.from_bytes(reply[i:i+step], "big"))
+                    if debug: print("daily", reply_a[0]/10, "total", reply_a[2])
+                    daily_power = reply_a[0]/10
+            if pv_power > -1 and daily_power >-1: break
         return (pv_power, daily_power)
 
 if __name__ == "__main__":
