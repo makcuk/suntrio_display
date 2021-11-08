@@ -77,8 +77,8 @@ def update_inv_data():
     try:
         data = requests.get(url, headers = {'Authorization': auth_header})
         inv_values = data.text.split(',')
-        inv_data['current_power'] = str(int(inv_values[23])+inv_data['sm_current_power'])+" W"
-        inv_data['daily_generation'] = str(int(inv_values[3])/100+inv_data['sm_daily_power'])+" kWh"
+        inv_data['current_power'] = str(int(inv_values[23]))
+        inv_data['daily_generation'] = str(int(inv_values[3])/100)
         inv_data['l1_volts'] = str(int(inv_values[25])/10)+"V"
         inv_data['l2_volts'] = str(int(inv_values[27])/10)+"V"
         inv_data['l3_volts'] = str(int(inv_values[29])/10)+"V"
@@ -87,8 +87,8 @@ def update_inv_data():
 
     except:
         print("Failed request")
-        inv_data['current_power'] = "N/A"
-        inv_data['daily_generation'] = "NO DATA"
+        inv_data['current_power'] = "0"
+        inv_data['daily_generation'] = "-1"
         inv_data['l1_volts'] = "N/A"
         inv_data['l2_volts'] = "N/A"
         inv_data['l3_volts'] = "N/A"
@@ -116,7 +116,7 @@ if __name__ == "__main__":
         pygame.draw.rect(screen, PH1_GREEN,[2,2,S_WIDTH,S_HEIGHT])
         pygame.draw.rect(screen, (40,40,40),[4,4,S_WIDTH-7,S_HEIGHT-7])
         inv_data = update_inv_data()
-        text_surface, rect = CURRENT_FONT.render(inv_data.current_power, PH1_GREEN)
+        text_surface, rect = CURRENT_FONT.render(inv_data.current_power+" W", PH1_GREEN)
         center(text_surface)
         screen.blit(text_surface, (center(text_surface), grid(3)))
 
@@ -127,7 +127,7 @@ if __name__ == "__main__":
 
         if inv_data.daily_generation != "NO DATA":
             daily_gen = inv_data.daily_generation
-        text_surface, rect = DAILY_FONT.render(daily_gen, (255, 255, 255))
+        text_surface, rect = DAILY_FONT.render(daily_gen+" kWh", (255, 255, 255))
         screen.blit(text_surface, (center(text_surface), grid(20)))
 
 
