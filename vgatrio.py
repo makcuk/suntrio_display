@@ -29,9 +29,10 @@ tries = 10
 while True:
     try:
         client1.connect(broker, port)
-        my_sm.connect("pvdisplay.local")
+#        my_sm.connect("pvdisplay.local")
         break
-    except:
+    except Exception as e:
+        print(str(e))
         time.sleep(5)
         if tries == 0: os._exit(3)
         tries -= 1
@@ -79,11 +80,11 @@ def update_inv_data():
         inv_values = data.text.split(',')
         inv_data['current_power'] = str(int(inv_values[23]))
         inv_data['daily_generation'] = str(int(inv_values[3])/100)
-        inv_data['l1_volts'] = str(int(inv_values[25])/10)+"V"
-        inv_data['l2_volts'] = str(int(inv_values[27])/10)+"V"
-        inv_data['l3_volts'] = str(int(inv_values[29])/10)+"V"
+        inv_data['l1_volts'] = str(int(inv_values[25])/10)
+        inv_data['l2_volts'] = str(int(inv_values[27])/10)
+        inv_data['l3_volts'] = str(int(inv_values[29])/10)
         inv_data['inv_temp'] = str(int(inv_values[32])/10)+" C"
-        inv_data['ac_freq'] = str(float(inv_values[24])/100)+" Hz"
+        inv_data['ac_freq'] = str(float(inv_values[24])/100)
 
     except:
         print("Failed request")
@@ -134,15 +135,16 @@ if __name__ == "__main__":
         text_surface, rect = BAR_FONT.render(str(inv_data.sm_daily_power)+" kWh", (255, 255, 255))
         screen.blit(text_surface, (center(text_surface), grid(29)))
 
-        text_surface, rect = AC_FONT.render("L1: %s L2: %s L3: %s" % (inv_data.l1_volts,inv_data.l2_volts,inv_data.l3_volts), (250, 51, 10))
+        text_surface, rect = AC_FONT.render("L1: %sV L2: %sV L3: %sV" % (inv_data.l1_volts,inv_data.l2_volts,inv_data.l3_volts), (250, 51, 10))
         screen.blit(text_surface, (center(text_surface), grid(33)))
-        text_surface, rect = BAR_FONT.render("%s  %s  %s" % (inv_data.inv_temp,inv_data.ac_freq, inv_data.current_time), PH1_GREEN)
+        text_surface, rect = BAR_FONT.render("%s  %sHz  %s" % (inv_data.inv_temp,inv_data.ac_freq, inv_data.current_time), PH1_GREEN)
         screen.blit(text_surface, (center(text_surface), grid(45)))
 
         publish_mqtt('current_power', inv_data.current_power)
         publish_mqtt('current_power_sm', inv_data.sm_current_power)
         publish_mqtt('daily_power', inv_data.daily_generation)
         publish_mqtt('daily_power_sm', inv_data.sm_daily_power)
+        publish_mqtt('ac_frequency', inv_data.ac_freq)
         publish_mqtt('phase1', inv_data.l1_volts)
         publish_mqtt('phase2', inv_data.l2_volts)
         publish_mqtt('phase3', inv_data.l3_volts)
